@@ -12,8 +12,17 @@ BASE_URL = 'https://router-worker.adamyang.workers.dev/transfer'
 EXPORT_PATH = './data'
 
 servers = API.servers()
+server_info_dict = {}
+for item in servers:
+    city_name = item['name']
+    # create a new entry in the dictionary with city name as the key
+    server_info_dict[city_name] = {
+        'latitude': item['latitude'],
+        'longitude': item['longitude']
+    }
+
 server_list = [item['name'] for item in servers]
-server_list_2 = [ 'london', 'chicago' ] # for test
+# server_list_2 = [ 'london', 'chicago' ] # for test
 
 # ================================ end prep =======================================
 
@@ -26,7 +35,7 @@ def probe(size):
     job = wiuppy.Job(API)
     job.uri = BASE_URL + '/' + str(size)
     job.tests = ['http']
-    job.servers = server_list
+    job.servers = server_list ## TODO this is where we modify test & real probe list
     job.options = {'http': {'method': 'GET'}}
     job_id = job.submit().id
     # get the API response as a python dictionary
@@ -66,12 +75,11 @@ def main():
         # http_data[city] = http_list
         request_summary = info['http'][0]
         request_summary['location'] = city
+        request_summary['latitude'] = server_info_dict[city]['latitude']
+        request_summary['longitude'] = server_info_dict[city]['longitude']
         export_data.append(request_summary)
 
     exportProbeAsCSV(export_data, size)
-
-
-
     # print(export_data)
 
 
